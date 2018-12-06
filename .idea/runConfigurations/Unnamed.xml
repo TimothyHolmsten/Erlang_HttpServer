@@ -1,0 +1,27 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Unnamed" type="ErlangUnitRunConfigurationType" factoryName="Erlang Eunit" singleton="false" nameIsGenerated="true" show_console_on_std_err="false" show_console_on_std_out="false">
+    <module name="WebServer" />
+    <option name="allowRunningInParallel" value="true" />
+    <option name="debugOptions">
+      <ErlangDebugOptions>
+        <option name="autoUpdateModulesNotToInterpret" value="true" />
+        <option name="modulesNotToInterpret">
+          <set />
+        </option>
+      </ErlangDebugOptions>
+    </option>
+    <option name="workDirectory" />
+    <option name="functionNames">
+      <set />
+    </option>
+    <option name="kind" value="MODULE" />
+    <option name="moduleNames">
+      <set>
+        <option value="web" />
+      </set>
+    </option>
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+</component>
