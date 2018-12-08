@@ -15,6 +15,8 @@
 -export([web_start/0]).
 -import(http, [process/1]).
 
+
+
 web_start() ->
   {ok, LSocket} = gen_tcp:listen(9999, [{active, false}, {packet, http}, {reuseaddr, true}]),
   accept(LSocket).
@@ -31,8 +33,8 @@ handle_message_http(Socket) ->
     {ok, Data} ->
       _Headers = receive_http_headers(Socket, []),
       Response = process(Data),
-      gen_tcp:send(Socket, Response),
-      gen_tcp:close(Socket);
+      gen_tcp:send(Socket, Response ++ "\r" ++ "\n");
+    %gen_tcp:close(Socket);
     {error, closed} ->
       ok
   end.

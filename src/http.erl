@@ -30,7 +30,7 @@ handle_request_path([Path, Type]) ->
                Headers = build_headers([
                  "Content-Type:",
                  find_content_type(Type),
-                 "Content-Length: ",
+                 "Content-Length:",
                  integer_to_list(length(_Body))
                ]),
 
@@ -76,12 +76,12 @@ find_content_type("css") ->
 find_content_type(_) ->
   "text/html".
 
-build_headers([H, [T1, T2] | []]) ->
-  build_headers([H, T1 ++ T2 ++ "\n"]);
-build_headers([A, B]) ->
-  A ++ B;
 build_headers([H, T | L]) ->
-  build_headers([H ++ T ++ "\n", L]).
+  build_headers(H ++ T ++ "\n", L).
+build_headers(C, [K, V]) ->
+  C ++ K ++ V ++ "\n";
+build_headers(C, [K, V | L]) ->
+  build_headers(C ++ K ++ V ++ "\n", L).
 
 build_http(Version, SC, RP) ->
   Version ++ " " ++ SC ++ " " ++ RP ++ "\r" ++ "\n".
