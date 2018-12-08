@@ -32,8 +32,10 @@ handle_message_http(Socket) ->
   case gen_tcp:recv(Socket, 0) of
     {ok, Data} ->
       _Headers = receive_http_headers(Socket, []),
-      Response = process(Data),
-      gen_tcp:send(Socket, Response ++ "\r" ++ "\n");
+      {Header, Response} = process(Data),
+      gen_tcp:send(Socket, Header),
+      gen_tcp:send(Socket, Response),
+      gen_tcp:send(Socket, "\r" ++ "\n");
     %gen_tcp:close(Socket);
     {error, closed} ->
       ok

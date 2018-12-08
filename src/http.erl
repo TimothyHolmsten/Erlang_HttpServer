@@ -24,40 +24,46 @@ handle_request_path({_RequestType, _Method, {abs_path, Path}, _Version}) ->
   handle_request_path(F);
 handle_request_path([Path, Type]) ->
   Return = case read_lines("web" ++ Path ++ "." ++ Type) of
-             {error, _} ->
-               code_not_found();
+             {not_found, Not_Found_Response} ->
+               Not_Found_Response;
              _Body ->
                Headers = build_headers([
                  "Content-Type:",
                  find_content_type(Type),
                  "Content-Length:",
-                 integer_to_list(length(_Body))
+                 integer_to_list(byte_size(_Body)),
+                 "Cache-Control:",
+                 "max-age=15",
+                 "Content-Encoding:",
+                 "gzip"
                ]),
 
                HTTP = build_http(?HTTP_VERSION, "200", "OK"),
 
-               HTTP ++ Headers ++ "\n" ++ _Body
+               {HTTP ++ Headers ++ "\n", _Body}
            end,
   Return;
 handle_request_path([Path]) ->
   Return = case read_lines("web" ++ Path ++ ".html") of
              {error, _} ->
-               code_not_found();
+               code_not_found(Path);
              _Body ->
                Headers = build_headers([
                  "Content-Type:",
                  "text/html",
                  "Content-Length:",
-                 integer_to_list(length(_Body))
+                 integer_to_list(byte_size(_Body)),
+                 "Content-Encoding:",
+                 "gzip"
                ]),
 
                HTTP = build_http(?HTTP_VERSION, "200", "OK"),
 
-               HTTP ++ Headers ++ "\n" ++ _Body
+               {HTTP ++ Headers ++ "\n", _Body}
            end,
   Return;
 handle_request_path({_Type, _Method, _Path, _Version}) ->
-  code_not_found().
+  code_not_found(_Path).
 
 find_content_type("jpg") ->
   "image/jpeg";
@@ -72,7 +78,13 @@ find_content_type("svg") ->
 find_content_type("js") ->
   "text/javascript";
 find_content_type("css") ->
-  "text/css ";
+  "text/css";
+find_content_type("woff2") ->
+  "application/font-woff2";
+find_content_type("woff") ->
+  "application/font-woff";
+find_content_type("ttf") ->
+  "application/x-font-ttf";
 find_content_type(_) ->
   "text/html".
 
@@ -86,28 +98,36 @@ build_headers(C, [K, V | L]) ->
 build_http(Version, SC, RP) ->
   Version ++ " " ++ SC ++ " " ++ RP ++ "\r" ++ "\n".
 
-code_not_found() ->
-  Body = "Not found :(",
+code_not_found([FileName, _]) ->
+  read_lines(FileName);
+code_not_found(FileName) ->
+  Body = FileName ++ " Not found :(",
 
   Headers = build_headers([
     "Content-Type:",
     "text/html",
     "Content-Length:",
-    integer_to_list(length(Body))
+    integer_to_list(length(Body)),
+    "Cache-Control:",
+    "max-age=3600"
   ]),
 
   HTTP = build_http(?HTTP_VERSION, "404", "Not Found"),
 
-  HTTP ++ Headers ++ "\n" ++ Body.
+  {not_found, HTTP ++ Headers ++ "\n" ++ Body}.
+
+check_for_font(FileName) ->
+  string:split(FileName, "?", trailing).
 
 read_lines(FileName) ->
   case file:open(FileName, [read]) of
     {ok, Device} ->
-      try get_all_lines(Device)
+      try Lines = get_all_lines(Device),
+      zlib:gzip(Lines)
       after file:close(Device)
       end;
-    {error, Reason} ->
-      {error, Reason}
+    {error, enoent} ->
+      code_not_found(check_for_font(FileName))
   end.
 
 get_all_lines(Device) ->
