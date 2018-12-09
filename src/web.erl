@@ -36,7 +36,6 @@ handle_message_http(Socket) ->
       gen_tcp:send(Socket, Header),
       gen_tcp:send(Socket, Response),
       gen_tcp:send(Socket, "\r" ++ "\n");
-    %gen_tcp:close(Socket);
     {error, closed} ->
       ok
   end.
